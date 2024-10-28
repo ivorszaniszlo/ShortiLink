@@ -1,4 +1,3 @@
-
 # ShortiLink App
 
 ## Table of Contents
@@ -8,6 +7,7 @@
 - [Technologies](#technologies)
 - [Setup](#setup)
   - [Docker Setup](#docker-setup)
+  - [Nginx Setup](#nginx-setup)
   - [Database Setup](#database-setup)
 - [Running](#running)
   - [Backend Running](#backend-running)
@@ -88,6 +88,37 @@ Build and run the Docker containers:
 docker-compose up --build
 ```
 
+### Nginx Setup
+
+In order to serve the Laravel application using Nginx, you will need to add an Nginx service to the Docker Compose file and create an Nginx configuration file.
+
+**Create an Nginx Configuration File**: Create a file named `nginx/default.conf` with the following content:
+
+   ```nginx
+   server {
+       listen 80;
+       server_name localhost;
+
+       root /var/www/html/public;
+       index index.php index.html;
+
+       location / {
+           try_files $uri $uri/ /index.php?$query_string;
+       }
+
+       location ~ \.php$ {
+           include fastcgi_params;
+           fastcgi_pass app:9000;
+           fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+           fastcgi_index index.php;
+       }
+
+       location ~ /\.ht {
+           deny all;
+       }
+   }
+   ```
+
 ## Running
 
 ### Backend Running
@@ -100,11 +131,7 @@ docker-compose exec app php artisan serve --host=0.0.0.0 --port=80
 
 ### Application Running
 
-Serve the Laravel application:
-
-```bash
-docker-compose exec app php artisan serve --host=0.0.0.0 --port=80
-```
+Serve the Laravel application using Nginx:
 
 The application will be available at `http://localhost:8000`.
 

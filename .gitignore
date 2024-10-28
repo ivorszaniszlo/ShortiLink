@@ -1,0 +1,29 @@
+# Laravel specific
+/public/hot
+/public/storage
+/storage/*.key
+/vendor
+/node_modules
+/.vscode
+.env
+.phpunit.result.cache
+
+# Debugging and log files
+/storage/logs/*.log
+/storage/framework/cache/data
+
+# Cache and temp files
+/storage/framework/cache/*
+/storage/framework/sessions/*
+/storage/framework/views/*
+
+# Deployment
+/.env.production
+/.env.staging
+
+# Logs
+*.log
+
+# Mac specific files
+.AppleDouble
+.LSOverride
