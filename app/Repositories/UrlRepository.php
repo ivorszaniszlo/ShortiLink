@@ -1,5 +1,5 @@
 <?php
-
+declare(strict_types=1);
 /**
  * This file contains the UrlRepository class, which is responsible for handling database operations related to URLs.
  *
@@ -7,7 +7,6 @@
  * @package  App\Repositories
  * @author   Szaniszlo Ivor <szaniszlo.ivor@gmail.com>
  * @license  MIT License
- * @version  PHP 8.2
  * @link     https://github.com/ivorszaniszlo/ShortiLink
  */
 
@@ -44,5 +43,17 @@ class UrlRepository
                 'short_code'   => $code,
             ]
         );
+    }
+
+    /**
+     * Check if a short code already exists in the database.
+     *
+     * @param string $code The short code to check.
+     *
+     * @return bool True if the code exists, false otherwise.
+     */
+    public function existsByCode(string $code): bool
+    {
+        return Url::where('short_code', $code)->exists();
     }
 }
