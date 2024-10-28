@@ -25,11 +25,20 @@ RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd
 # Install Composer
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
-# Set working directory
-WORKDIR /var/www/html
+# Install Node.js and npm
+RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
+    apt-get install -y nodejs
 
-# Copy existing application directory contents and set permissions
-COPY --chown=www-data:www-data . /var/www/html
+# Set working directory
+WORKDIR /var/www
+
+# Correct permissions for the npm cache folder
+# Set permissions for Node.js and npm directories
+RUN mkdir -p /var/www/.npm /var/www/node_modules && \
+    chown -R www-data:www-data /var/www/.npm /var/www/node_modules
+
+# Copy existing application directory contents
+COPY --chown=www-data:www-data . /var/www
 
 # Change current user to www-data for better security
 USER www-data

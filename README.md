@@ -7,7 +7,7 @@
 - [Technologies](#technologies)
 - [Setup](#setup)
   - [Docker Setup](#docker-setup)
-  - [Nginx Setup](#nginx-setup)
+  - [Node.js Setup](#node.js-setup)
   - [Database Setup](#database-setup)
 - [Running](#running)
   - [Backend Running](#backend-running)
@@ -88,36 +88,13 @@ Build and run the Docker containers:
 docker-compose up --build
 ```
 
-### Nginx Setup
+### Node.js Setup
 
-In order to serve the Laravel application using Nginx, you will need to add an Nginx service to the Docker Compose file and create an Nginx configuration file.
+Install Node.js dependencies for the frontend:
 
-**Create an Nginx Configuration File**: Create a file named `nginx/default.conf` with the following content:
-
-   ```nginx
-   server {
-       listen 80;
-       server_name localhost;
-
-       root /var/www/html/public;
-       index index.php index.html;
-
-       location / {
-           try_files $uri $uri/ /index.php?$query_string;
-       }
-
-       location ~ \.php$ {
-           include fastcgi_params;
-           fastcgi_pass app:9000;
-           fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
-           fastcgi_index index.php;
-       }
-
-       location ~ /\.ht {
-           deny all;
-       }
-   }
-   ```
+```bash
+docker-compose exec app npm install
+```
 
 ## Running
 
@@ -126,14 +103,10 @@ In order to serve the Laravel application using Nginx, you will need to add an N
 Serve the Laravel backend application:
 
 ```bash
-docker-compose exec app php artisan serve --host=0.0.0.0 --port=80
+php artisan serve --host=0.0.0.0 --port=8000
 ```
 
-### Application Running
-
-Serve the Laravel application using Nginx:
-
-The application will be available at `http://localhost:8000`.
+The application will be available at `http://localhost:8000`. Note that before serving the Laravel application, make sure to run the migrations.
 
 ## Testing
 
