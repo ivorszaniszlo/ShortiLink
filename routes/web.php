@@ -17,6 +17,14 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UrlController;
 
+
+Route::get(
+    '/',
+    function () {
+        return view('welcome');
+    }
+);
+
 Route::get('/new', [UrlController::class, 'create'])->name('url.create');
 Route::post('/new', [UrlController::class, 'store'])->name('url.store');
 Route::get('/jump/{code}', [UrlController::class, 'redirect'])->name('url.redirect');

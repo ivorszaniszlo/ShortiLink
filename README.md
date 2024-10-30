@@ -1,3 +1,4 @@
+
 # ShortiLink App
 
 ## Table of Contents
@@ -6,33 +7,31 @@
 - [Description](#description)
 - [Technologies](#technologies)
 - [Setup](#setup)
-  - [Docker Setup](#docker-setup)
-  - [Node.js Setup](#node.js-setup)
+  - [Clone the Repository](#clone-the-repository)
+  - [Backend Setup](#backend-setup)
+  - [Environment Setup](#environment-setup)
   - [Database Setup](#database-setup)
+  - [Docker Setup](#docker-setup)
+  - [Node.js Setup](#nodejs-setup)
 - [Running](#running)
   - [Backend Running](#backend-running)
-  - [Testing](#testing)
+- [Testing](#testing)
 - [Status](#status)
 - [Created By](#created-by)
 
 ## General Information
 
-The ShortiLink application is a Laravel 11-based URL shortening system that allows users to easily shorten long URLs, similar to bit.ly. With this application, users can quickly generate short URLs and share them across different platforms. Laravel 11 introduces several new features, including a minimal application structure, SQLite as the default database, health routing, and enhanced queue interaction testing.
+The ShortiLink application is a Laravel 11-based URL shortening system that enables users to easily generate short URLs, similar to bit.ly. The project leverages Laravel 11's new minimal structure and includes advanced features such as MySQL as the default database, health routing, queue interaction testing, and an enhanced base controller.
 
 ## Description
 
-With ShortiLink, you can easily shorten long URLs. The backend is built on Laravel 11, while the frontend utilizes Alpine.js and Livewire to provide an interactive user experience.
-
-## Screenshot
-
-
+With ShortiLink, users can shorten lengthy URLs to share across different platforms. The backend is built on Laravel 11.
 
 ## Technologies
 
 - Laravel 11
 - PHP 8.2
 - MySQL
-- Alpine.js and Livewire
 - Docker
 - Adminer (Database management)
 - PHP Debug Bar
@@ -42,87 +41,89 @@ With ShortiLink, you can easily shorten long URLs. The backend is built on Larav
 
 ### Clone the Repository
 
-```bash
+Clone the project repository to your local machine:
+
+\`\`\`bash
 git clone https://github.com/ivorszaniszlo/ShortiLink.git
-```
+\`\`\`
 
 ### Backend Setup
 
 Navigate to the project directory and install backend dependencies:
 
-```bash
-cd shortilink
+\`\`\`bash
+cd ShortiLink
 docker-compose exec app composer install
-```
+\`\`\`
 
 ### Environment Setup
 
-Set up environment variables:
+Copy the example environment file and generate the application key:
 
-```bash
+\`\`\`bash
 cp .env.example .env
 docker-compose exec app php artisan key:generate
-```
+\`\`\`
 
 ### Database Setup
 
-Set up the database and run migrations:
+Run migrations and seed the database:
 
-```bash
+\`\`\`bash
 docker-compose exec app php artisan migrate --seed
-```
+\`\`\`
 
-To access the database, you can use the Adminer interface at `http://localhost:8081`.
+The database management tool Adminer is available at \`http://localhost:8081\`.
 
 ### Install PHP Debug Bar
 
-```bash
+Add PHP Debug Bar to assist with debugging during development:
+
+\`\`\`bash
 docker-compose exec app composer require barryvdh/laravel-debugbar --dev
-```
+\`\`\`
 
 ### Docker Setup
 
-Build and run the Docker containers:
+Build and start the Docker containers:
 
-```bash
+\`\`\`bash
 docker-compose up --build
-```
+\`\`\`
 
 ### Node.js Setup
 
-Install Node.js dependencies for the frontend:
+Install the frontend dependencies:
 
-```bash
+\`\`\`bash
 docker-compose exec app npm install
-```
+\`\`\`
 
 ## Running
 
 ### Backend Running
 
-Serve the Laravel backend application:
+Serve the Laravel application:
 
-```bash
+\`\`\`bash
 php artisan serve --host=0.0.0.0 --port=8000
-```
+\`\`\`
 
-The application will be available at `http://localhost:8000`. Note that before serving the Laravel application, make sure to run the migrations.
+The application is now accessible at \`http://localhost:8000\`. Be sure to run migrations prior to starting the server.
 
 ## Testing
 
-To run the tests, use the following command:
+Run all unit and functional tests with the following command:
 
-```bash
+\`\`\`bash
 docker-compose exec app php artisan test
-```
+\`\`\`
 
-This command will run all unit and functional tests of the application, ensuring proper functionality.
+For database refresh before testing, use:
 
-If you need to refresh the database before testing, use the following command:
-
-```bash
+\`\`\`bash
 php artisan migrate:refresh --seed
-```
+\`\`\`
 
 ## Status
 
@@ -130,4 +131,4 @@ Active
 
 ## Created By
 
-2024
+Szaniszló Ivor, 2024
