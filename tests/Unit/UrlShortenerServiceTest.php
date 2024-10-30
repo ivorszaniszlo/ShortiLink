@@ -92,7 +92,7 @@ class UrlShortenerServiceTest extends TestCase
         $this->urlRepositoryMock
             ->shouldReceive('create')
             ->with(Mockery::any(), Mockery::any())
-            ->andReturn(Mockery::mock(\App\Models\Url::class)); // mock URL model if needed
+            ->andReturn(Mockery::mock(\App\Models\Url::class));
     
         $shortUrl = $this->urlShortenerService->shortenUrl($originalUrl);
     
@@ -115,5 +115,70 @@ class UrlShortenerServiceTest extends TestCase
         $method->setAccessible(true);
 
         return $method->invokeArgs($object, $parameters);
+    }
+
+    /**
+     * Test that shortenUrl handles code collisions by regenerating a unique code.
+     *
+     * @return void
+     */
+    public function testShortenUrlHandlesCollision(): void
+    {
+        $originalUrl = 'https://collision-test.com';
+
+        // First call to existsByCode returns true (collision), second call returns false (no collision)
+        $this->urlRepositoryMock
+            ->shouldReceive('existsByCode')
+            ->andReturn(true, false);
+
+        $this->urlRepositoryMock
+            ->shouldReceive('create')
+            ->with(Mockery::any(), Mockery::any())
+            ->andReturn(Mockery::mock(\App\Models\Url::class));
+
+        $shortUrl = $this->urlShortenerService->shortenUrl($originalUrl);
+
+        $this->assertStringStartsWith("/jump/", $shortUrl);
+    }
+
+    /**
+     * Test that shortenUrl throws an exception for an invalid URL.
+     *
+     * @return void
+     */
+    public function testShortenUrlThrowsExceptionForInvalidUrl(): void
+    {
+        $this->urlRepositoryMock
+            ->shouldReceive('existsByCode')
+            ->andReturn(false);
+            
+        $this->urlRepositoryMock
+            ->shouldReceive('create')
+            ->andReturn(Mockery::mock(\App\Models\Url::class));
+
+        $this->expectException(\InvalidArgumentException::class);
+
+        $invalidUrl = 'invalid-url';
+        $this->urlShortenerService->shortenUrl($invalidUrl);
+    }
+
+    
+
+    /**
+     * Test that generateShortCode produces a 6-character unique code.
+     *
+     * @return void
+     */
+    public function testGenerateShortCodeProducesUniqueCode(): void
+    {
+        $this->urlRepositoryMock
+            ->shouldReceive('existsByCode')
+            ->andReturn(false);
+
+        $originalUrl = 'https://example.com';
+        $shortCode = $this->invokePrivateMethod($this->urlShortenerService, '_generateShortCode', [$originalUrl]);
+
+        $this->assertEquals(6, strlen($shortCode));
+        $this->assertMatchesRegularExpression('/^[a-zA-Z0-9]{6}$/', $shortCode);
     }
 }

@@ -65,8 +65,14 @@ class UrlShortenerService
      */
     public function shortenUrl(string $url): string
     {
+        if (!filter_var($url, FILTER_VALIDATE_URL)) {
+            throw new \InvalidArgumentException('Invalid URL provided');
+        }
+
+        // Folytatjuk a kód rövidítésével
         $shortCode = $this->_generateShortCode($url);
         $this->urlRepository->create($url, $shortCode);
+
         return "/jump/{$shortCode}";
     }
 }
