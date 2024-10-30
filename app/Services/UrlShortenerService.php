@@ -40,6 +40,18 @@ class UrlShortenerService
     }
 
     /**
+     * Get details of a URL by its ID.
+     *
+     * @param int $id The ID of the URL.
+     * 
+     * @return \App\Models\Url|null The URL model instance, or null if not found.
+     */
+    public function getUrlDetailsById(int $id)
+    {
+        return $this->urlRepository->findById($id);
+    }
+
+    /**
      * Generate a unique short code for a given URL.
      * This method ensures that the generated code does not collide with existing entries.
      *
@@ -74,5 +86,16 @@ class UrlShortenerService
         $this->urlRepository->create($url, $shortCode);
 
         return "/jump/{$shortCode}";
+    }
+    /**
+     * Find the original URL by its short code.
+     *
+     * @param string $code The short code for the URL.
+     * 
+     * @return string|null The original URL, or null if not found.
+     */
+    public function findOriginalUrl(string $code): ?string
+    {
+        return $this->urlRepository->findUrlByCode($code);
     }
 }

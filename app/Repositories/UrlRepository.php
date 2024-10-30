@@ -56,4 +56,30 @@ class UrlRepository
     {
         return Url::where('short_code', $code)->exists();
     }
+
+    /**
+     * Find the original URL by short code.
+     *
+     * @param string $code The short code.
+     * 
+     * @return string|null The original URL, or null if not found.
+     */
+    public function findUrlByCode(string $code): ?string
+    {
+        $urlRecord = Url::where('short_code', $code)->first();
+
+        return $urlRecord ? $urlRecord->original_url : null;
+    }
+
+    /**
+     * Find a URL by its ID.
+     *
+     * @param int $id The ID of the URL.
+     * 
+     * @return \App\Models\Url|null The URL model instance, or null if not found.
+     */
+    public function findById(int $id): ?Url
+    {
+        return Url::find($id);
+    }
 }
