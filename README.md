@@ -15,6 +15,7 @@
   - [Node.js Setup](#nodejs-setup)
 - [Running](#running)
   - [Backend Running](#backend-running)
+- [API Endpoints](#api-endpoints)
 - [Testing](#testing)
 - [Status](#status)
 - [Created By](#created-by)
@@ -110,6 +111,48 @@ php artisan serve --host=0.0.0.0 --port=8000
 \`\`\`
 
 The application is now accessible at \`http://localhost:8000\`. Be sure to run migrations prior to starting the server.
+
+## API Endpoints
+
+The ShortiLink application provides the following API endpoints for URL shortening functionality.
+
+### 1. `POST /new`
+
+- **Description**: Accepts a long URL and generates a shortened URL.
+- **Request Method**: `POST`
+- **Request Body**:
+  - `url`: Required. The long URL to be shortened.
+- **Example Request**:
+  ```bash
+  curl -X POST http://localhost:8000/new -d "url=https://example.com"
+  ```
+- **Response**:
+  - Returns the shortened URL in JSON format.
+  - **Example**:
+    ```json
+    {
+      "shortened_url": "/jump/e11543"
+    }
+    ```
+
+### 2. `GET /jump/{code}`
+
+- **Description**: Redirects to the original long URL based on the provided short code.
+- **Request Method**: `GET`
+- **Route Parameters**:
+  - `code`: Required. The unique short code for the URL.
+- **Example Request**:
+  ```bash
+  curl -L http://localhost:8000/jump/e11543
+  ```
+- **Response**:
+  - Redirects to the original URL.
+  - If the code is invalid, returns a 404 error with JSON response:
+    ```json
+    {
+      "error": "URL not found"
+    }
+    ```
 
 ## Testing
 
