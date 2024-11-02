@@ -39,6 +39,7 @@ With ShortiLink, users can shorten lengthy URLs to share across different platfo
 - PHPUnit
 - Livewire
 - Alpine.js
+- PHPStan (for static analysis)
 
 ## Setup
 
@@ -77,6 +78,8 @@ docker-compose exec app php artisan migrate --seed
 ```
 
 The database management tool Adminer is available at `http://localhost:8081`.
+
+Note: Ensure that the latest migration files are applied to reflect the new database schema.
 
 ### Install PHP Debug Bar
 
@@ -230,6 +233,8 @@ For database refresh before testing, use:
 ```bash
 php artisan migrate:refresh --seed
 ```
+
+Note: We also use PHPStan to ensure code quality, particularly for type consistency across the application.
 
 ## Status
 
