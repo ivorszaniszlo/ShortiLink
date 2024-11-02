@@ -46,20 +46,17 @@ class UrlShortenerService
      * 
      * @return \App\Models\Url|null The URL model instance, or null if not found.
      */
-    public function getUrlDetailsById(int $id)
+    public function getUrlDetailsById(int $id): ?\App\Models\Url
     {
         return $this->urlRepository->findById($id);
     }
 
     /**
-     * Generate a unique short code for a given URL.
-     * This method ensures that the generated code does not collide with existing entries.
-     *
-     * @param string $url The original URL to generate a short code for.
+     * Generate a unique short code.
      *
      * @return string The generated unique short code.
      */
-    private function _generateShortCode(string $url): string
+    private function _generateShortCode(): string
     {
         do {
             $shortCode = substr(bin2hex(random_bytes(3)), 0, 6);
@@ -67,6 +64,7 @@ class UrlShortenerService
 
         return $shortCode;
     }
+
 
     /**
      * Shorten a given URL.
@@ -77,15 +75,11 @@ class UrlShortenerService
      */
     public function shortenUrl(string $url): string
     {
-        if (!filter_var($url, FILTER_VALIDATE_URL)) {
-            throw new \InvalidArgumentException('Invalid URL provided');
-        }
 
-        // Folytatjuk a kód rövidítésével
-        $shortCode = $this->_generateShortCode($url);
+        $shortCode = $this->_generateShortCode();
         $this->urlRepository->create($url, $shortCode);
 
-        return "/jump/{$shortCode}";
+        return url("/jump/{$shortCode}");
     }
     /**
      * Find the original URL by its short code.

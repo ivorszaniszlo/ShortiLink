@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 /**
  * This file contains the UrlShortenerForm class.
  *
@@ -56,14 +57,11 @@ class UrlShortenerForm extends Component
      * 
      * @return void
      */
-    public function shortenUrl(UrlShortenerService $urlShortenerService)
+    public function shortenUrl()
     {
-        $this->validate(
-            [
-                'url' => 'required|url'
-            ]
-        );
-
+        $this->validate();
+    
+        $urlShortenerService = app(UrlShortenerService::class);
         $this->shortenedUrl = $urlShortenerService->shortenUrl($this->url);
     }
 

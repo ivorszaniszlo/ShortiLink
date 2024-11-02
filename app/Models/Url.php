@@ -8,7 +8,6 @@ declare(strict_types=1);
  * @package  App\Models
  * @author   Szaniszlo Ivor <szaniszlo.ivor@gmail.com>
  * @license  MIT License
- * @version  PHP 8.2
  * @link     https://github.com/ivorszaniszlo/ShortiLink
  */
 
@@ -36,5 +35,4 @@ class Url extends Model
         'original_url',
         'short_code',
     ];
-    public $timestamps = true;
 }

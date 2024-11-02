@@ -1,5 +1,5 @@
 <?php
-
+declare(strict_types=1);
 /**
  * This file contains the UrlController class, which is responsible for handling URL shortening and redirection.
  *
@@ -12,7 +12,6 @@
 namespace App\Http\Controllers;
 
 use App\Services\UrlShortenerService;
-use Illuminate\Http\Request;
 
 /**
  * Controller for managing URL shortening and redirection.
@@ -43,62 +42,6 @@ class UrlController extends Controller
     }
 
     /**
-     * Show the form for creating a new URL.
-     *
-     * @return \Illuminate\View\View
-     */
-    public function create()
-    {
-        return view('url.create');
-    }
-
-    /**
-     * Store a new shortened URL.
-     *
-     * @param Request $request The HTTP request containing the original URL to shorten.
-     * 
-     * @return \Illuminate\Http\JsonResponse  JSON response containing the shortened URL.
-     */
-    public function store(Request $request)
-    {
-        $request->validate(['url' => 'required|url']);
-        
-        $shortenedUrl = $this->urlShortenerService->shortenUrl($request->input('url'));
-
-        return response()->json(
-            [
-                'shortened_url' => $shortenedUrl
-            ],
-            201
-        );
-    }
-
-      /**
-       * Show details of the shortened URL by its ID.
-       *
-       * @param int $id The ID of the shortened URL.
-       * 
-       * @return \Illuminate\Http\JsonResponse
-       */
-    public function show(int $id)
-    {
-        $urlData = $this->urlShortenerService->getUrlDetailsById($id);
-
-        if (!$urlData) {
-            return response()->json(['error' => 'URL not found'], 404);
-        }
-
-        return response()->json(
-            [
-            'original_url' => $urlData->original_url,
-            'short_code' => $urlData->short_code,
-            'created_at' => $urlData->created_at
-            ]
-        );
-    }
-
-
-    /**
      * Redirect to the original URL based on the provided short code.
      *
      * @param string $code The unique short code to find the original URL.
@@ -110,7 +53,9 @@ class UrlController extends Controller
         $url = $this->urlShortenerService->findOriginalUrl($code);
 
         if (!$url) {
-            return response()->json(['error' => 'URL not found'], 404);
+            if (!$url) {
+                abort(404);
+            }            
         }
 
         return redirect()->away($url);

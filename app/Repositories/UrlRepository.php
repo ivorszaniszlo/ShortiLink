@@ -68,7 +68,7 @@ class UrlRepository
     {
         $urlRecord = Url::where('short_code', $code)->first();
 
-        return $urlRecord ? $urlRecord->original_url : null;
+        return $urlRecord?->original_url;
     }
 
     /**
