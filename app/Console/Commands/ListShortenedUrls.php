@@ -59,6 +59,7 @@ class ListShortenedUrls extends Command
         // Check if any URLs were found
         if ($urls->isEmpty()) {
             $this->info('No shortened URLs found in the system.');
+
             return Command::SUCCESS;
         }
 

@@ -1,5 +1,5 @@
 <?php
-declare(strict_types=1);
+
 /**
  * This file contains the UrlShortenerForm class.
  *
@@ -9,6 +9,9 @@ declare(strict_types=1);
  * @license  MIT License
  * @link     https://github.com/ivorszaniszlo/ShortiLink
  */
+
+declare(strict_types=1);
+
 namespace App\Http\Livewire;
 
 use Livewire\Component;
@@ -21,7 +24,7 @@ use App\Services\UrlShortenerService;
  *
  * @category Livewire_Component
  * @package  App\Http\Livewire
- * @author   Szaniszló Ivor <szaniszlo.ivor@gmail.com>
+ * @author   Szaniszlo Ivor <szaniszlo.ivor@gmail.com>
  * @license  MIT License
  * @link     https://github.com/ivorszaniszlo/ShortiLink
  */
@@ -47,7 +50,7 @@ class UrlShortenerForm extends Component
      * @var array
      */
     protected $rules = [
-        'url' => 'required|url'
+        'url' => 'required|url',
     ];
 
     protected UrlShortenerService $urlShortenerService;
@@ -55,8 +58,6 @@ class UrlShortenerForm extends Component
     /**
      * Shortens the provided URL.
      *
-     * @param UrlShortenerService $urlShortenerService Service to shorten URLs.
-     * 
      * @return void
      */
     public function shortenUrl()
@@ -74,8 +75,6 @@ class UrlShortenerForm extends Component
      */
     public function render()
     {
-        return view('livewire.url-shortener-form')
-            ->layout('components.layouts.app');
+        return view('livewire.url-shortener-form');
     }
-
 }

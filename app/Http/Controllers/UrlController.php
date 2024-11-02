@@ -1,5 +1,5 @@
 <?php
-declare(strict_types=1);
+
 /**
  * This file contains the UrlController class, which is responsible for handling URL shortening and redirection.
  *
@@ -9,6 +9,9 @@ declare(strict_types=1);
  * @license  MIT License
  * @link     https://github.com/ivorszaniszlo/ShortiLink
  */
+
+declare(strict_types=1);
+
 namespace App\Http\Controllers;
 
 use App\Services\UrlShortenerService;
@@ -18,7 +21,7 @@ use App\Services\UrlShortenerService;
  *
  * This controller provides methods for storing a new shortened URL and
  * redirecting to the original URL based on a short code.
- * 
+ *
  * UrlController handles URL shortening and redirection.
  *
  * @category Controller
@@ -45,8 +48,9 @@ class UrlController extends Controller
      * Redirect to the original URL based on the provided short code.
      *
      * @param string $code The unique short code to find the original URL.
-     * 
-     * @return \Illuminate\Http\RedirectResponse|\Illuminate\Http\Response  Redirects to the original URL or returns an error.
+     *
+     * @return \Illuminate\Http\RedirectResponse|\Illuminate\Http\Response Redirects to the original URL or returns
+     *  an error.
      */
     public function redirect(string $code)
     {

@@ -16,6 +16,7 @@
 /storage/framework/cache/*
 /storage/framework/sessions/*
 /storage/framework/views/*
+.php-cs-fixer.cache
 
 # Deployment
 /.env.production

@@ -1,15 +1,17 @@
 <?php
-declare(strict_types=1);
+
 /**
  * This file contains the Url model, which represents a URL entity in the application.
  * It is responsible for interacting with the "urls" database table.
  *
  * @category Model
  * @package  App\Models
- * @author   Szaniszlo Ivor <szaniszlo.ivor@gmail.com>
+ * @author   Szaniszlo Ivor
  * @license  MIT License
  * @link     https://github.com/ivorszaniszlo/ShortiLink
  */
+
+declare(strict_types=1);
 
 namespace App\Models;
 
@@ -23,7 +25,7 @@ use Illuminate\Database\Eloquent\Model;
  *
  * @category Model
  * @package  App\Models
- * @author   Szaniszlo Ivor <szaniszlo.ivor@gmail.com>
+ * @author   Szaniszlo Ivor
  * @license  MIT License
  * @link     https://github.com/ivorszaniszlo/ShortiLink
  */

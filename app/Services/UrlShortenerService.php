@@ -1,5 +1,4 @@
 <?php
-declare(strict_types=1);
 
 /**
  * URL Shortener Service responsible for shortening URLs and retrieving original URLs.
@@ -7,6 +6,8 @@ declare(strict_types=1);
  * @category Service
  * @package  App\Services
  */
+
+declare(strict_types=1);
 
 namespace App\Services;
 
@@ -37,8 +38,6 @@ class UrlShortenerService
     protected UrlGenerator $urlGenerator;
 
     private const UNIQUE_CONSTRAINT_VIOLATION_CODE = '23000';
-
-
 
     /**
      * UrlShortenerService constructor.
@@ -134,9 +133,9 @@ class UrlShortenerService
     private function isUniqueConstraintViolation(QueryException $e): bool
     {
         $sqlStateCode = $e->errorInfo[0] ?? null;
+
         return $sqlStateCode === self::UNIQUE_CONSTRAINT_VIOLATION_CODE;
     }
-
 
     /**
      * Retrieves the original URL based on the short code.
