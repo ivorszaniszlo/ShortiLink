@@ -1,12 +1,16 @@
 <?php
-declare(strict_types=1);
 
 /**
  * Unit tests for the UrlShortenerService class.
  *
  * @category Test
  * @package  Tests\Unit
+ * @author   Szaniszlo Ivor <szaniszlo.ivor@gmail.com>
+ * @license  MIT License
+ * @link     https://github.com/ivorszaniszlo/ShortiLink
  */
+
+declare(strict_types=1);
 
 namespace Tests\Unit;
 
@@ -23,6 +27,12 @@ use PHPUnit\Framework\TestCase;
  * Class UrlShortenerServiceTest
  *
  * Tests the functionality of the UrlShortenerService class.
+ *
+ * @category Test
+ * @package  Tests\Unit
+ * @author   Szaniszlo Ivor <szaniszlo.ivor@gmail.com>
+ * @license  MIT License
+ * @link     https://github.com/ivorszaniszlo/ShortiLink
  */
 class UrlShortenerServiceTest extends TestCase
 {
@@ -36,19 +46,21 @@ class UrlShortenerServiceTest extends TestCase
     /**
      * Mock instance of UrlRepository.
      *
-     * @var MockInterface
+     * @var UrlRepository&MockInterface
      */
     protected $urlRepositoryMock;
 
     /**
      * Mock instance of UrlGenerator.
      *
-     * @var MockInterface
+     * @var UrlGenerator&MockInterface
      */
     protected $urlGeneratorMock;
 
     /**
      * Sets up the test environment.
+     *
+     * @return void
      */
     protected function setUp(): void
     {
@@ -65,6 +77,8 @@ class UrlShortenerServiceTest extends TestCase
 
     /**
      * Tears down the test environment.
+     *
+     * @return void
      */
     protected function tearDown(): void
     {
@@ -74,6 +88,8 @@ class UrlShortenerServiceTest extends TestCase
 
     /**
      * Tests that shortenUrl generates and saves a short code.
+     *
+     * @return void
      */
     public function testShortenUrlGeneratesAndSavesShortCode(): void
     {
@@ -83,7 +99,7 @@ class UrlShortenerServiceTest extends TestCase
         $shortUrl = "http://localhost/jump/{$shortCode}";
 
         $this->urlRepositoryMock
-            ->shouldReceive('findByNormalizedUrl')
+            ->shouldReceive('getUrlByNormalizedUrl')
             ->with($normalizedUrl)
             ->andReturn(null);
 
@@ -97,7 +113,6 @@ class UrlShortenerServiceTest extends TestCase
             ->with("/jump/{$shortCode}")
             ->andReturn($shortUrl);
 
-        // Mock the generateShortCode method
         $urlShortenerServiceMock = Mockery::mock(
             UrlShortenerService::class,
             [$this->urlRepositoryMock, $this->urlGeneratorMock]
@@ -114,6 +129,8 @@ class UrlShortenerServiceTest extends TestCase
 
     /**
      * Tests that shortenUrl handles collisions during short code generation.
+     *
+     * @return void
      */
     public function testShortenUrlHandlesCollision(): void
     {
@@ -124,22 +141,19 @@ class UrlShortenerServiceTest extends TestCase
         $shortUrl = "http://localhost/jump/{$secondShortCode}";
 
         $this->urlRepositoryMock
-            ->shouldReceive('findByNormalizedUrl')
+            ->shouldReceive('getUrlByNormalizedUrl')
             ->with($normalizedUrl)
             ->andReturn(null);
 
-        // Mock a UrlShortenerService példány létrehozása a generateShortCode metódus vezérléséhez
         $urlShortenerServiceMock = Mockery::mock(
             UrlShortenerService::class,
             [$this->urlRepositoryMock, $this->urlGeneratorMock]
         )->makePartial()->shouldAllowMockingProtectedMethods();
 
-        // Az első hívásnál $firstShortCode, a másodiknál $secondShortCode
         $urlShortenerServiceMock
             ->shouldReceive('generateShortCode')
             ->andReturn($firstShortCode, $secondShortCode);
 
-        // Egyedi megszorítás megsértésének szimulálása az első próbálkozásnál
         $pdoException = new \PDOException('Unique constraint violation');
         $pdoException->errorInfo = ['23000', 1062, 'Duplicate entry'];
 
@@ -155,7 +169,6 @@ class UrlShortenerServiceTest extends TestCase
             ->with($originalUrl, $normalizedUrl, $firstShortCode)
             ->andThrow($queryException);
 
-        // A második próbálkozás sikeres
         $this->urlRepositoryMock
             ->shouldReceive('create')
             ->with($originalUrl, $normalizedUrl, $secondShortCode)
@@ -171,9 +184,10 @@ class UrlShortenerServiceTest extends TestCase
         $this->assertEquals($shortUrl, $result);
     }
 
-
     /**
      * Tests that shortenUrl throws an exception for an invalid URL.
+     *
+     * @return void
      */
     public function testShortenUrlThrowsExceptionForInvalidUrl(): void
     {
@@ -188,11 +202,16 @@ class UrlShortenerServiceTest extends TestCase
     /**
      * Tests that generateShortCode produces a code of correct length and format.
      *
+     * @return void
      * @throws \Exception
      */
     public function testGenerateShortCodeProducesValidCode(): void
     {
-        $shortCode = $this->invokePrivateMethod($this->urlShortenerService, 'generateShortCode', []);
+        $reflection = new \ReflectionClass($this->urlShortenerService);
+        $method = $reflection->getMethod('generateShortCode');
+        $method->setAccessible(true);
+
+        $shortCode = $method->invoke($this->urlShortenerService);
 
         $this->assertEquals(6, strlen($shortCode));
         $this->assertMatchesRegularExpression('/^[a-f0-9]{6}$/', $shortCode);
@@ -200,19 +219,23 @@ class UrlShortenerServiceTest extends TestCase
 
     /**
      * Tests that normalizeUrl correctly normalizes different URLs.
+     *
+     * @return void
      */
     public function testNormalizeUrl(): void
     {
         $url = 'HTTPS://WWW.Example.COM/Path?query=123';
         $expectedNormalizedUrl = 'www.example.com/path?query=123';
 
-        $normalizedUrl = $this->invokePrivateMethod($this->urlShortenerService, 'normalizeUrl', [$url]);
+        $normalizedUrl = $this->invokePrivateMethod($this->urlShortenerService, '_normalizeUrl', [$url]);
 
         $this->assertEquals($expectedNormalizedUrl, $normalizedUrl);
     }
 
     /**
      * Tests that isUniqueConstraintViolation correctly identifies unique constraint violations.
+     *
+     * @return void
      */
     public function testIsUniqueConstraintViolation(): void
     {
@@ -226,11 +249,10 @@ class UrlShortenerServiceTest extends TestCase
             $pdoException
         );
 
-        $result = $this->invokePrivateMethod($this->urlShortenerService, 'isUniqueConstraintViolation', [$queryException]);
+        $result = $this->invokePrivateMethod($this->urlShortenerService, '_isUniqueConstraintViolation', [$queryException]);
 
         $this->assertTrue($result);
     }
-
 
     /**
      * Invokes a private or protected method using reflection.

@@ -29,4 +29,4 @@ Route::get(
 Route::get('/new', UrlShortenerForm::class)->name('url.create');
 
 // Redirect to the original URL based on the shortened code
-Route::get('/jump/{code}', [UrlController::class, 'redirect'])->name('url.redirect');
+Route::get('/jump/{code}', [UrlController::class, 'redirectToOriginalUrl'])->name('url.redirectToOriginalUrl');

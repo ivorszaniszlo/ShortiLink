@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * This file contains the ListShortenedUrls Artisan command.
+ * 
+ * @category Console_Commands
+ * @package  App\Console\Commands
+ * @author   Szaniszlo Ivor <szaniszlo.ivor@gmail.com>
+ * @license  MIT License
+ * @link     https://github.com/ivorszaniszlo/ShortiLink
+ */
+
 declare(strict_types=1);
 
 namespace App\Console\Commands;
@@ -12,8 +22,11 @@ use App\Models\Url;
  *
  * This Artisan command lists all shortened URLs stored in the system.
  *
- * @category Console Commands
+ * @category Console_Commands
  * @package  App\Console\Commands
+ * @author   Szaniszlo Ivor <szaniszlo.ivor@gmail.com>
+ * @license  MIT License
+ * @link     https://github.com/ivorszaniszlo/ShortiLink
  */
 class ListShortenedUrls extends Command
 {
@@ -34,51 +47,59 @@ class ListShortenedUrls extends Command
     /**
      * Execute the console command.
      *
-     * Retrieves and displays all shortened URLs in a table format.
-     * Optionally filters the URLs based on the provided search term.
-     *
      * @return int
      */
     public function handle(): int
     {
-        // Retrieve the search option if provided
         $search = $this->option('search');
+        $urls = $this->_getUrls($search);
 
-        // Initialize the query builder for the Url model
-        $query = Url::query();
-
-        // Apply search filter if the search option is provided
-        if ($search) {
-            $query->where('original_url', 'like', "%{$search}%")
-                  ->orWhere('short_code', 'like', "%{$search}%");
-        }
-
-        // Execute the query and retrieve the relevant fields
-        $urls = $query->get(['id', 'original_url', 'short_code', 'created_at']);
-
-        // Check if any URLs were found
         if ($urls->isEmpty()) {
             $this->info('No shortened URLs found in the system.');
-
             return Command::SUCCESS;
         }
 
-        // Prepare the data for the table display
-        $tableData = $urls->map(function (Url $url) {
-            return [
+        $this->_displayUrlsInTable($urls);
+        return Command::SUCCESS;
+    }
+
+    /**
+     * Retrieves the list of URLs, optionally filtered by a search term.
+     *
+     * @param string|null $search The search term to filter the URLs.
+     *
+     * @return \Illuminate\Support\Collection The collection of URLs.
+     */
+    private function _getUrls(?string $search)
+    {
+        $query = Url::query();
+
+        if (!empty($search)) {
+            $query->where('original_url', 'like', "%{$search}%")
+                ->orWhere('short_code', 'like', "%{$search}%");
+        }
+
+        return $query->get(['id', 'original_url', 'short_code', 'created_at']);
+    }
+
+    /**
+     * Displays the URLs in a table format.
+     *
+     * @param \Illuminate\Support\Collection $urls The collection of URLs to display.
+     *
+     * @return void
+     */
+    private function _displayUrlsInTable($urls): void
+    {
+        $tableData = $urls->map(
+            fn (Url $url) => [
                 'ID'           => $url->id,
                 'Original URL' => $url->original_url,
                 'Short Code'   => $url->short_code,
                 'Created At'   => $url->created_at->format('Y-m-d H:i:s'),
-            ];
-        })->toArray();
+            ]
+        )->toArray();
 
-        // Display the URLs in a table format
-        $this->table(
-            ['ID', 'Original URL', 'Short Code', 'Created At'],
-            $tableData
-        );
-
-        return Command::SUCCESS;
+        $this->table(['ID', 'Original URL', 'Short Code', 'Created At'], $tableData);
     }
 }

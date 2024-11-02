@@ -5,6 +5,9 @@
  *
  * @category Service
  * @package  App\Services
+ * @author   Szaniszlo Ivor <szaniszlo.ivor@gmail.com>
+ * @license  MIT License
+ * @link     https://github.com/ivorszaniszlo/ShortiLink
  */
 
 declare(strict_types=1);
@@ -20,6 +23,12 @@ use InvalidArgumentException;
  * Class UrlShortenerService
  *
  * Handles the shortening of URLs and retrieval of the original URLs.
+ * 
+ * @category Service
+ * @package  App\Services
+ * @author   Szaniszlo Ivor <szaniszlo.ivor@gmail.com>
+ * @license  MIT License
+ * @link     https://github.com/ivorszaniszlo/ShortiLink
  */
 class UrlShortenerService
 {
@@ -28,14 +37,14 @@ class UrlShortenerService
      *
      * @var UrlRepository
      */
-    protected UrlRepository $urlRepository;
+    private UrlRepository $_urlRepository;
 
     /**
      * The URL generator service.
      *
      * @var UrlGenerator
      */
-    protected UrlGenerator $urlGenerator;
+    private UrlGenerator $_urlGenerator;
 
     private const UNIQUE_CONSTRAINT_VIOLATION_CODE = '23000';
 
@@ -47,31 +56,29 @@ class UrlShortenerService
      */
     public function __construct(UrlRepository $urlRepository, UrlGenerator $urlGenerator)
     {
-        $this->urlRepository = $urlRepository;
-        $this->urlGenerator = $urlGenerator;
+        $this->_urlRepository = $urlRepository;
+        $this->_urlGenerator = $urlGenerator;
     }
 
     /**
      * Shortens the given URL and returns the shortened URL.
      *
      * @param string $url The URL to shorten.
-     *
+     * 
      * @return string The shortened URL.
-     *
+     * 
      * @throws InvalidArgumentException If the provided URL is invalid.
      */
     public function shortenUrl(string $url): string
     {
-        if (!filter_var($url, FILTER_VALIDATE_URL)) {
-            throw new InvalidArgumentException('Invalid URL provided.');
-        }
+        $this->_validateUrl($url);
 
-        $normalizedUrl = $this->normalizeUrl($url);
+        $normalizedUrl = $this->_normalizeUrl($url);
 
         // Check if the URL already exists
-        $existingUrl = $this->urlRepository->findByNormalizedUrl($normalizedUrl);
+        $existingUrl = $this->_urlRepository->getUrlByNormalizedUrl($normalizedUrl);
         if ($existingUrl) {
-            return $this->urlGenerator->to("/jump/{$existingUrl->short_code}");
+            return $this->_urlGenerator->to("/jump/{$existingUrl->short_code}");
         }
 
         // Generate and save short code
@@ -79,18 +86,34 @@ class UrlShortenerService
             $shortCode = $this->generateShortCode();
 
             try {
-                $this->urlRepository->create($url, $normalizedUrl, $shortCode);
+                $this->_urlRepository->create($url, $normalizedUrl, $shortCode);
                 $success = true;
             } catch (QueryException $e) {
-                if ($this->isUniqueConstraintViolation($e)) {
-                    $success = false; // Collision occurred, try again
+                if ($this->_isUniqueConstraintViolation($e)) {
+                    $success = false;
                 } else {
                     throw $e;
                 }
             }
         } while (!$success);
 
-        return $this->urlGenerator->to("/jump/{$shortCode}");
+        return $this->_urlGenerator->to("/jump/{$shortCode}");
+    }
+
+    /**
+     * Validates the given URL.
+     *
+     * @param string $url The URL to validate.
+     * 
+     * @return void
+     * 
+     * @throws InvalidArgumentException If the provided URL is invalid.
+     */
+    private function _validateUrl(string $url): void
+    {
+        if (!filter_var($url, FILTER_VALIDATE_URL)) {
+            throw new InvalidArgumentException('Invalid URL provided.');
+        }
     }
 
     /**
@@ -100,7 +123,7 @@ class UrlShortenerService
      *
      * @return string The normalized URL.
      */
-    private function normalizeUrl(string $url): string
+    private function _normalizeUrl(string $url): string
     {
         $parsedUrl = parse_url(strtolower($url));
 
@@ -130,7 +153,7 @@ class UrlShortenerService
      *
      * @return bool True if a unique constraint violation occurred.
      */
-    private function isUniqueConstraintViolation(QueryException $e): bool
+    private function _isUniqueConstraintViolation(QueryException $e): bool
     {
         $sqlStateCode = $e->errorInfo[0] ?? null;
 
@@ -146,6 +169,6 @@ class UrlShortenerService
      */
     public function findOriginalUrl(string $code): ?string
     {
-        return $this->urlRepository->findUrlByCode($code);
+        return $this->_urlRepository->findOriginalUrlByShortCode($code);
     }
 }

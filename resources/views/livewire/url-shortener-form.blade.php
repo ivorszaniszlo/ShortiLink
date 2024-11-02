@@ -1,7 +1,7 @@
 <div x-data="{ copied: false }">
     <form wire:submit.prevent="shortenUrl">
-        <input type="text" wire:model="url" placeholder="Enter URL to shorten">
-        @error('url') <span class="error">{{ $message }}</span> @enderror
+        <input type="text" wire:model="originalUrl" placeholder="Enter URL to shorten">
+        @error('originalUrl') <span class="error">{{ $message }}</span> @enderror
         <button type="submit">Shorten URL</button>
     </form>
 

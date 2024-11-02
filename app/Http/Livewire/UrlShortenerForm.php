@@ -5,7 +5,7 @@
  *
  * @category Livewire_Component
  * @package  App\Http\Livewire
- * @author   Szaniszló Ivor <szaniszlo.ivor@gmail.com>
+ * @author   Szaniszlo Ivor <szaniszlo.ivor@gmail.com>
  * @license  MIT License
  * @link     https://github.com/ivorszaniszlo/ShortiLink
  */
@@ -31,14 +31,14 @@ use App\Services\UrlShortenerService;
 class UrlShortenerForm extends Component
 {
     /**
-     * The URL to be shortened.
+     * The original URL input by the user.
      *
      * @var string
      */
-    public string $url = '';
+    public string $originalUrl = '';
 
     /**
-     * The shortened URL result.
+     * The resulting shortened URL.
      *
      * @var string|null
      */
@@ -47,31 +47,31 @@ class UrlShortenerForm extends Component
     /**
      * Validation rules for the URL input.
      *
-     * @var array
+     * @var array<string, string>
      */
-    protected $rules = [
-        'url' => 'required|url',
+    protected array $rules = [
+        'originalUrl' => 'required|url',
     ];
 
-    protected UrlShortenerService $urlShortenerService;
-
     /**
-     * Shortens the provided URL.
+     * Shortens the provided original URL.
+     *
+     * @param UrlShortenerService $urlShortenerService Service to handle URL shortening logic.
      *
      * @return void
      */
-    public function shortenUrl()
+    public function shortenUrl(UrlShortenerService $urlShortenerService): void
     {
         $this->validate();
 
-        $urlShortenerService = app(UrlShortenerService::class);
-        $this->shortenedUrl = $urlShortenerService->shortenUrl($this->url);
+        // Use the service to shorten the URL
+        $this->shortenedUrl = $urlShortenerService->shortenUrl($this->originalUrl);
     }
 
     /**
      * Renders the Livewire component view.
      *
-     * @return \Illuminate\View\View
+     * @return \Illuminate\Contracts\View\View
      */
     public function render()
     {

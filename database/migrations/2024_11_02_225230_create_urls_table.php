@@ -41,9 +41,9 @@ class CreateUrlsTable extends Migration
             'urls',
             function (Blueprint $table) {
                 $table->id();
-                $table->text('original_url');
+                $table->string('original_url');
                 $table->string('normalized_url')->unique();
-                $table->string('short_code', 6)->unique();
+                $table->string('short_code')->unique();
                 $table->timestamps();
             }
         );        

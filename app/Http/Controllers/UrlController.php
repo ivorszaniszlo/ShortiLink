@@ -5,7 +5,7 @@
  *
  * @category Controller
  * @package  App\Http\Controllers
- * @author   Szaniszló Ivor <szaniszlo.ivor@gmail.com>
+ * @author   Szaniszlo Ivor <szaniszlo.ivor@gmail.com>
  * @license  MIT License
  * @link     https://github.com/ivorszaniszlo/ShortiLink
  */
@@ -15,6 +15,8 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Services\UrlShortenerService;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Response;
 
 /**
  * Controller for managing URL shortening and redirection.
@@ -22,16 +24,19 @@ use App\Services\UrlShortenerService;
  * This controller provides methods for storing a new shortened URL and
  * redirecting to the original URL based on a short code.
  *
- * UrlController handles URL shortening and redirection.
- *
  * @category Controller
  * @package  App\Http\Controllers
- * @author   Szaniszló Ivor <szaniszlo.ivor@gmail.com>
+ * @author   Szaniszlo Ivor <szaniszlo.ivor@gmail.com>
  * @license  MIT License
  * @link     https://github.com/ivorszaniszlo/ShortiLink
  */
 class UrlController extends Controller
 {
+    /**
+     * Service for handling URL shortening and retrieval.
+     *
+     * @var UrlShortenerService
+     */
     protected UrlShortenerService $urlShortenerService;
 
     /**
@@ -49,17 +54,32 @@ class UrlController extends Controller
      *
      * @param string $code The unique short code to find the original URL.
      *
-     * @return \Illuminate\Http\RedirectResponse|\Illuminate\Http\Response Redirects to the original URL or returns
-     *  an error.
+     * @return RedirectResponse|Response Redirects to the original URL or returns a 404 error if not found.
      */
-    public function redirect(string $code)
+    public function redirectToOriginalUrl(string $code)
+    {
+        $originalUrl = $this->_getOriginalUrl($code);
+
+        return redirect()->away($originalUrl);
+    }
+
+    /**
+     * Retrieves the original URL based on the short code.
+     *
+     * @param string $code The short code associated with the original URL.
+     *
+     * @return string The original URL.
+     *
+     * @throws \Illuminate\Http\Exceptions\HttpResponseException If no URL is found.
+     */
+    private function _getOriginalUrl(string $code): string
     {
         $url = $this->urlShortenerService->findOriginalUrl($code);
 
         if (!$url) {
-            abort(404);
+            abort(404, 'The requested URL could not be found.');
         }
 
-        return redirect()->away($url);
+        return $url;
     }
 }

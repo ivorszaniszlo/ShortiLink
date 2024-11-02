@@ -5,7 +5,7 @@
  *
  * @category Repository
  * @package  App\Repositories
- * @author   Szaniszlo Ivor
+ * @author   Szaniszlo Ivor <szaniszlo.ivor@gmail.com>
  * @license  MIT License
  * @link     https://github.com/ivorszaniszlo/ShortiLink
  */
@@ -23,7 +23,7 @@ use App\Models\Url;
  *
  * @category Repository
  * @package  App\Repositories
- * @author   Szaniszlo Ivor
+ * @author   Szaniszlo Ivor <szaniszlo.ivor@gmail.com>
  * @license  MIT License
  * @link     https://github.com/ivorszaniszlo/ShortiLink
  */
@@ -32,19 +32,19 @@ class UrlRepository
     /**
      * Create a new URL record in the database.
      *
-     * @param string $originalUrl  The original URL.
+     * @param string $originalUrl   The original URL.
      * @param string $normalizedUrl The normalized version of the original URL.
-     * @param string $code The short code to associate with the URL.
+     * @param string $code          The short code to associate with the URL.
      *
-     * @return \App\Models\Url The newly created URL model instance.
+     * @return Url The newly created URL model instance.
      */
     public function create(string $originalUrl, string $normalizedUrl, string $code): Url
     {
         return Url::create(
             [
-                'original_url'   => $originalUrl,
-                'normalized_url' => $normalizedUrl,
-                'short_code'     => $code,
+            'original_url'   => $originalUrl,
+            'normalized_url' => $normalizedUrl,
+            'short_code'     => $code,
             ]
         );
     }
@@ -58,19 +58,19 @@ class UrlRepository
      */
     public function existsByCode(string $code): bool
     {
-        return Url::where('short_code', $code)->exists();
+        return $this->_findByColumn('short_code', $code) !== null;
     }
 
     /**
      * Find the original URL by short code.
      *
-     * @param string $normalizedUrl The normalized URL.
+     * @param string $code The short code.
      *
-     * @return \App\Models\Url|null The URL model instance, or null if not found.
+     * @return string|null The original URL, or null if not found.
      */
-    public function findUrlByCode(string $code): ?string
+    public function findOriginalUrlByShortCode(string $code): ?string
     {
-        $urlRecord = Url::where('short_code', $code)->first();
+        $urlRecord = $this->_findByColumn('short_code', $code);
 
         return $urlRecord?->original_url;
     }
@@ -80,10 +80,23 @@ class UrlRepository
      *
      * @param string $normalizedUrl The normalized URL.
      *
-     * @return \App\Models\Url|null The URL model instance, or null if not found.
+     * @return Url|null The URL model instance, or null if not found.
      */
-    public function findByNormalizedUrl(string $normalizedUrl): ?Url
+    public function getUrlByNormalizedUrl(string $normalizedUrl): ?Url
     {
-        return Url::where('normalized_url', $normalizedUrl)->first();
+        return $this->_findByColumn('normalized_url', $normalizedUrl);
+    }
+
+    /**
+     * Find a URL by a specific column.
+     *
+     * @param string $column The column to search by.
+     * @param string $value  The value to search for.
+     *
+     * @return Url|null The URL model instance, or null if not found.
+     */
+    private function _findByColumn(string $column, string $value): ?Url
+    {
+        return Url::where($column, $value)->first();
     }
 }
