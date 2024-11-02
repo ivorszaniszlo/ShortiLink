@@ -53,9 +53,7 @@ class UrlController extends Controller
         $url = $this->urlShortenerService->findOriginalUrl($code);
 
         if (!$url) {
-            if (!$url) {
-                abort(404);
-            }            
+            abort(404);
         }
 
         return redirect()->away($url);

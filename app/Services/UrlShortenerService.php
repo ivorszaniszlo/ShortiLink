@@ -1,92 +1,149 @@
 <?php
 declare(strict_types=1);
+
 /**
- * This file contains the UrlShortenerService class, which is responsible for the business logic of URL shortening.
+ * URL Shortener Service responsible for shortening URLs and retrieving original URLs.
  *
  * @category Service
  * @package  App\Services
- * @author   Szaniszló Ivor <szaniszlo.ivor@gmail.com>
- * @license  MIT License
- * @link     https://github.com/ivorszaniszlo/ShortiLink
  */
 
 namespace App\Services;
 
 use App\Repositories\UrlRepository;
+use Illuminate\Database\QueryException;
+use Illuminate\Contracts\Routing\UrlGenerator;
+use InvalidArgumentException;
 
 /**
  * Class UrlShortenerService
  *
- * This service handles the business logic of shortening URLs.
- *
- * @category Service
- * @package  App\Services
- * @author   Szaniszló Ivor <szaniszlo.ivor@gmail.com>
- * @license  MIT License
- * @link     https://github.com/ivorszaniszlo/ShortiLink
+ * Handles the shortening of URLs and retrieval of the original URLs.
  */
 class UrlShortenerService
 {
+    /**
+     * The repository responsible for URL database operations.
+     *
+     * @var UrlRepository
+     */
     protected UrlRepository $urlRepository;
+
+    /**
+     * The URL generator service.
+     *
+     * @var UrlGenerator
+     */
+    protected UrlGenerator $urlGenerator;
+
+    private const UNIQUE_CONSTRAINT_VIOLATION_CODE = '23000';
+
+
 
     /**
      * UrlShortenerService constructor.
      *
-     * @param UrlRepository $urlRepository The repository responsible for URL data access.
+     * @param UrlRepository $urlRepository The repository handling URL operations.
+     * @param UrlGenerator  $urlGenerator  The URL generator service.
      */
-    public function __construct(UrlRepository $urlRepository)
+    public function __construct(UrlRepository $urlRepository, UrlGenerator $urlGenerator)
     {
         $this->urlRepository = $urlRepository;
+        $this->urlGenerator = $urlGenerator;
     }
 
     /**
-     * Get details of a URL by its ID.
+     * Shortens the given URL and returns the shortened URL.
      *
-     * @param int $id The ID of the URL.
-     * 
-     * @return \App\Models\Url|null The URL model instance, or null if not found.
-     */
-    public function getUrlDetailsById(int $id): ?\App\Models\Url
-    {
-        return $this->urlRepository->findById($id);
-    }
-
-    /**
-     * Generate a unique short code.
+     * @param string $url The URL to shorten.
      *
-     * @return string The generated unique short code.
-     */
-    private function _generateShortCode(): string
-    {
-        do {
-            $shortCode = substr(bin2hex(random_bytes(3)), 0, 6);
-        } while ($this->urlRepository->existsByCode($shortCode));
-
-        return $shortCode;
-    }
-
-
-    /**
-     * Shorten a given URL.
+     * @return string The shortened URL.
      *
-     * @param string $url The original URL to shorten.
-     *
-     * @return string The generated short URL.
+     * @throws InvalidArgumentException If the provided URL is invalid.
      */
     public function shortenUrl(string $url): string
     {
+        if (!filter_var($url, FILTER_VALIDATE_URL)) {
+            throw new InvalidArgumentException('Invalid URL provided.');
+        }
 
-        $shortCode = $this->_generateShortCode();
-        $this->urlRepository->create($url, $shortCode);
+        $normalizedUrl = $this->normalizeUrl($url);
 
-        return url("/jump/{$shortCode}");
+        // Check if the URL already exists
+        $existingUrl = $this->urlRepository->findByNormalizedUrl($normalizedUrl);
+        if ($existingUrl) {
+            return $this->urlGenerator->to("/jump/{$existingUrl->short_code}");
+        }
+
+        // Generate and save short code
+        do {
+            $shortCode = $this->generateShortCode();
+
+            try {
+                $this->urlRepository->create($url, $normalizedUrl, $shortCode);
+                $success = true;
+            } catch (QueryException $e) {
+                if ($this->isUniqueConstraintViolation($e)) {
+                    $success = false; // Collision occurred, try again
+                } else {
+                    throw $e;
+                }
+            }
+        } while (!$success);
+
+        return $this->urlGenerator->to("/jump/{$shortCode}");
     }
+
     /**
-     * Find the original URL by its short code.
+     * Normalizes the URL for comparison.
      *
-     * @param string $code The short code for the URL.
-     * 
-     * @return string|null The original URL, or null if not found.
+     * @param string $url The URL to normalize.
+     *
+     * @return string The normalized URL.
+     */
+    private function normalizeUrl(string $url): string
+    {
+        $parsedUrl = parse_url(strtolower($url));
+
+        $host = $parsedUrl['host'] ?? '';
+        $path = $parsedUrl['path'] ?? '';
+        $query = isset($parsedUrl['query']) ? '?' . $parsedUrl['query'] : '';
+
+        return $host . $path . $query;
+    }
+
+    /**
+     * Generates a short code.
+     *
+     * @return string The generated short code.
+     *
+     * @throws \Exception If random bytes generation fails.
+     */
+    protected function generateShortCode(): string
+    {
+        return substr(bin2hex(random_bytes(3)), 0, 6);
+    }
+
+    /**
+     * Checks if the database exception is due to a unique constraint violation.
+     *
+     * @param QueryException $e The database exception.
+     *
+     * @return bool True if a unique constraint violation occurred.
+     */
+    private function isUniqueConstraintViolation(QueryException $e): bool
+    {
+        $sqlStateCode = $e->errorInfo[0] ?? null;
+        return $sqlStateCode === self::UNIQUE_CONSTRAINT_VIOLATION_CODE;
+    }
+
+
+    /**
+     * Retrieves the original URL based on the short code.
+     *
+     * @param string $code The short code.
+     *
+     * @return string|null The original URL or null if not found.
      */
     public function findOriginalUrl(string $code): ?string
     {

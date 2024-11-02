@@ -50,6 +50,8 @@ class UrlShortenerForm extends Component
         'url' => 'required|url'
     ];
 
+    protected UrlShortenerService $urlShortenerService;
+
     /**
      * Shortens the provided URL.
      *
@@ -60,7 +62,7 @@ class UrlShortenerForm extends Component
     public function shortenUrl()
     {
         $this->validate();
-    
+
         $urlShortenerService = app(UrlShortenerService::class);
         $this->shortenedUrl = $urlShortenerService->shortenUrl($this->url);
     }

@@ -35,12 +35,13 @@ class UrlRepository
      *
      * @return \App\Models\Url The newly created URL model instance.
      */
-    public function create(string $url, string $code): Url
+    public function create(string $originalUrl, string $normalizedUrl, string $code): Url
     {
         return Url::create(
             [
-                'original_url' => $url,
-                'short_code'   => $code,
+                'original_url'   => $originalUrl,
+                'normalized_url' => $normalizedUrl,
+                'short_code'     => $code,
             ]
         );
     }
@@ -71,15 +72,8 @@ class UrlRepository
         return $urlRecord?->original_url;
     }
 
-    /**
-     * Find a URL by its ID.
-     *
-     * @param int $id The ID of the URL.
-     * 
-     * @return \App\Models\Url|null The URL model instance, or null if not found.
-     */
-    public function findById(int $id): ?Url
+    public function findByNormalizedUrl(string $normalizedUrl): ?Url
     {
-        return Url::find($id);
+        return Url::where('normalized_url', $normalizedUrl)->first();
     }
 }

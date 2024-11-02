@@ -1,73 +1,70 @@
 <?php
+declare(strict_types=1);
 
 /**
- * This file contains the unit tests for the UrlShortenerService class.
- * It ensures that all business logic related to URL shortening is functioning correctly.
+ * Unit tests for the UrlShortenerService class.
  *
- * @category Testing
+ * @category Test
  * @package  Tests\Unit
- * @author   Szaniszló Ivor <szaniszlo.ivor@gmail.com>
- * @license  MIT License
- * @link     http://example.com
  */
-
-declare(strict_types=1);
 
 namespace Tests\Unit;
 
 use App\Services\UrlShortenerService;
 use App\Repositories\UrlRepository;
-use PHPUnit\Framework\TestCase;
+use Illuminate\Contracts\Routing\UrlGenerator;
+use Illuminate\Database\QueryException;
+use InvalidArgumentException;
 use Mockery;
+use Mockery\MockInterface;
+use PHPUnit\Framework\TestCase;
 
 /**
- * Unit tests for the UrlShortenerService class.
+ * Class UrlShortenerServiceTest
  *
- * @category Testing
- * @package  Tests\Unit
- * @author   Szaniszló Ivor <szaniszlo.ivor@gmail.com>
- * @license  MIT License
- * @link     http://example.com
+ * Tests the functionality of the UrlShortenerService class.
  */
 class UrlShortenerServiceTest extends TestCase
 {
     /**
-     * The instance of UrlShortenerService to be tested.
+     * The service under test.
      *
      * @var UrlShortenerService
      */
     protected UrlShortenerService $urlShortenerService;
 
     /**
-     * Mock instance of UrlRepository for dependency injection.
+     * Mock instance of UrlRepository.
      *
-     * @var UrlRepository|\Mockery\MockInterface
+     * @var MockInterface
      */
     protected $urlRepositoryMock;
 
     /**
-     * Set up the test environment.
+     * Mock instance of UrlGenerator.
      *
-     * @return void
+     * @var MockInterface
+     */
+    protected $urlGeneratorMock;
+
+    /**
+     * Sets up the test environment.
      */
     protected function setUp(): void
     {
         parent::setUp();
-        
-        /**
-         * Create a mock for UrlRepository.
-         *
-         * @var UrlRepository $mock
-         */
-        $mock = Mockery::mock(UrlRepository::class);
-        $this->urlRepositoryMock = $mock;
-        $this->urlShortenerService = new UrlShortenerService($this->urlRepositoryMock);
+
+        $this->urlRepositoryMock = Mockery::mock(UrlRepository::class);
+        $this->urlGeneratorMock = Mockery::mock(UrlGenerator::class);
+
+        $this->urlShortenerService = new UrlShortenerService(
+            $this->urlRepositoryMock,
+            $this->urlGeneratorMock
+        );
     }
 
     /**
-     * Tear down the test environment.
-     *
-     * @return void
+     * Tears down the test environment.
      */
     protected function tearDown(): void
     {
@@ -76,37 +73,173 @@ class UrlShortenerServiceTest extends TestCase
     }
 
     /**
-     * Test that shortenUrl generates a unique short code and saves the URL to the database.
-     *
-     * @return void
+     * Tests that shortenUrl generates and saves a short code.
      */
     public function testShortenUrlGeneratesAndSavesShortCode(): void
     {
         $originalUrl = 'https://example.com';
-        
+        $normalizedUrl = 'example.com';
+        $shortCode = 'abc123';
+        $shortUrl = "http://localhost/jump/{$shortCode}";
+
         $this->urlRepositoryMock
-            ->shouldReceive('existsByCode')
-            ->with(Mockery::any())
-            ->andReturn(false);
-    
+            ->shouldReceive('findByNormalizedUrl')
+            ->with($normalizedUrl)
+            ->andReturn(null);
+
         $this->urlRepositoryMock
             ->shouldReceive('create')
-            ->with(Mockery::any(), Mockery::any())
+            ->with($originalUrl, $normalizedUrl, $shortCode)
             ->andReturn(Mockery::mock(\App\Models\Url::class));
-    
-        $shortUrl = $this->urlShortenerService->shortenUrl($originalUrl);
-    
-        $this->assertStringStartsWith("/jump/", $shortUrl);
-    }    
+
+        $this->urlGeneratorMock
+            ->shouldReceive('to')
+            ->with("/jump/{$shortCode}")
+            ->andReturn($shortUrl);
+
+        // Mock the generateShortCode method
+        $urlShortenerServiceMock = Mockery::mock(
+            UrlShortenerService::class,
+            [$this->urlRepositoryMock, $this->urlGeneratorMock]
+        )->makePartial()->shouldAllowMockingProtectedMethods();
+
+        $urlShortenerServiceMock
+            ->shouldReceive('generateShortCode')
+            ->andReturn($shortCode);
+
+        $result = $urlShortenerServiceMock->shortenUrl($originalUrl);
+
+        $this->assertEquals($shortUrl, $result);
+    }
 
     /**
-     * Helper function to invoke a private method of an object.
+     * Tests that shortenUrl handles collisions during short code generation.
+     */
+    public function testShortenUrlHandlesCollision(): void
+    {
+        $originalUrl = 'https://collision-test.com';
+        $normalizedUrl = 'collision-test.com';
+        $firstShortCode = 'def456';
+        $secondShortCode = 'ghi789';
+        $shortUrl = "http://localhost/jump/{$secondShortCode}";
+
+        $this->urlRepositoryMock
+            ->shouldReceive('findByNormalizedUrl')
+            ->with($normalizedUrl)
+            ->andReturn(null);
+
+        // Mock a UrlShortenerService példány létrehozása a generateShortCode metódus vezérléséhez
+        $urlShortenerServiceMock = Mockery::mock(
+            UrlShortenerService::class,
+            [$this->urlRepositoryMock, $this->urlGeneratorMock]
+        )->makePartial()->shouldAllowMockingProtectedMethods();
+
+        // Az első hívásnál $firstShortCode, a másodiknál $secondShortCode
+        $urlShortenerServiceMock
+            ->shouldReceive('generateShortCode')
+            ->andReturn($firstShortCode, $secondShortCode);
+
+        // Egyedi megszorítás megsértésének szimulálása az első próbálkozásnál
+        $pdoException = new \PDOException('Unique constraint violation');
+        $pdoException->errorInfo = ['23000', 1062, 'Duplicate entry'];
+
+        $queryException = new QueryException(
+            '',
+            '',
+            [],
+            $pdoException
+        );
+
+        $this->urlRepositoryMock
+            ->shouldReceive('create')
+            ->with($originalUrl, $normalizedUrl, $firstShortCode)
+            ->andThrow($queryException);
+
+        // A második próbálkozás sikeres
+        $this->urlRepositoryMock
+            ->shouldReceive('create')
+            ->with($originalUrl, $normalizedUrl, $secondShortCode)
+            ->andReturn(Mockery::mock(\App\Models\Url::class));
+
+        $this->urlGeneratorMock
+            ->shouldReceive('to')
+            ->with("/jump/{$secondShortCode}")
+            ->andReturn($shortUrl);
+
+        $result = $urlShortenerServiceMock->shortenUrl($originalUrl);
+
+        $this->assertEquals($shortUrl, $result);
+    }
+
+
+    /**
+     * Tests that shortenUrl throws an exception for an invalid URL.
+     */
+    public function testShortenUrlThrowsExceptionForInvalidUrl(): void
+    {
+        $invalidUrl = 'invalid-url';
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid URL provided.');
+
+        $this->urlShortenerService->shortenUrl($invalidUrl);
+    }
+
+    /**
+     * Tests that generateShortCode produces a code of correct length and format.
      *
-     * @param object $object     The object to invoke the method on.
-     * @param string $methodName The name of the method to invoke.
-     * @param array  $parameters The parameters to pass to the method.
+     * @throws \Exception
+     */
+    public function testGenerateShortCodeProducesValidCode(): void
+    {
+        $shortCode = $this->invokePrivateMethod($this->urlShortenerService, 'generateShortCode', []);
+
+        $this->assertEquals(6, strlen($shortCode));
+        $this->assertMatchesRegularExpression('/^[a-f0-9]{6}$/', $shortCode);
+    }
+
+    /**
+     * Tests that normalizeUrl correctly normalizes different URLs.
+     */
+    public function testNormalizeUrl(): void
+    {
+        $url = 'HTTPS://WWW.Example.COM/Path?query=123';
+        $expectedNormalizedUrl = 'www.example.com/path?query=123';
+
+        $normalizedUrl = $this->invokePrivateMethod($this->urlShortenerService, 'normalizeUrl', [$url]);
+
+        $this->assertEquals($expectedNormalizedUrl, $normalizedUrl);
+    }
+
+    /**
+     * Tests that isUniqueConstraintViolation correctly identifies unique constraint violations.
+     */
+    public function testIsUniqueConstraintViolation(): void
+    {
+        $pdoException = new \PDOException('Unique constraint violation');
+        $pdoException->errorInfo = ['23000', 1062, 'Duplicate entry'];
+
+        $queryException = new QueryException(
+            '',
+            '',
+            [],
+            $pdoException
+        );
+
+        $result = $this->invokePrivateMethod($this->urlShortenerService, 'isUniqueConstraintViolation', [$queryException]);
+
+        $this->assertTrue($result);
+    }
+
+
+    /**
+     * Invokes a private or protected method using reflection.
      *
-     * @return mixed The result of the invoked method.
+     * @param object $object     The object instance.
+     * @param string $methodName The name of the method.
+     * @param array  $parameters The method parameters.
+     *
+     * @return mixed The method return value.
      */
     protected function invokePrivateMethod(object $object, string $methodName, array $parameters = [])
     {
@@ -115,70 +248,5 @@ class UrlShortenerServiceTest extends TestCase
         $method->setAccessible(true);
 
         return $method->invokeArgs($object, $parameters);
-    }
-
-    /**
-     * Test that shortenUrl handles code collisions by regenerating a unique code.
-     *
-     * @return void
-     */
-    public function testShortenUrlHandlesCollision(): void
-    {
-        $originalUrl = 'https://collision-test.com';
-
-        // First call to existsByCode returns true (collision), second call returns false (no collision)
-        $this->urlRepositoryMock
-            ->shouldReceive('existsByCode')
-            ->andReturn(true, false);
-
-        $this->urlRepositoryMock
-            ->shouldReceive('create')
-            ->with(Mockery::any(), Mockery::any())
-            ->andReturn(Mockery::mock(\App\Models\Url::class));
-
-        $shortUrl = $this->urlShortenerService->shortenUrl($originalUrl);
-
-        $this->assertStringStartsWith("/jump/", $shortUrl);
-    }
-
-    /**
-     * Test that shortenUrl throws an exception for an invalid URL.
-     *
-     * @return void
-     */
-    public function testShortenUrlThrowsExceptionForInvalidUrl(): void
-    {
-        $this->urlRepositoryMock
-            ->shouldReceive('existsByCode')
-            ->andReturn(false);
-            
-        $this->urlRepositoryMock
-            ->shouldReceive('create')
-            ->andReturn(Mockery::mock(\App\Models\Url::class));
-
-        $this->expectException(\InvalidArgumentException::class);
-
-        $invalidUrl = 'invalid-url';
-        $this->urlShortenerService->shortenUrl($invalidUrl);
-    }
-
-    
-
-    /**
-     * Test that generateShortCode produces a 6-character unique code.
-     *
-     * @return void
-     */
-    public function testGenerateShortCodeProducesUniqueCode(): void
-    {
-        $this->urlRepositoryMock
-            ->shouldReceive('existsByCode')
-            ->andReturn(false);
-
-        $originalUrl = 'https://example.com';
-        $shortCode = $this->invokePrivateMethod($this->urlShortenerService, '_generateShortCode', [$originalUrl]);
-
-        $this->assertEquals(6, strlen($shortCode));
-        $this->assertMatchesRegularExpression('/^[a-zA-Z0-9]{6}$/', $shortCode);
     }
 }

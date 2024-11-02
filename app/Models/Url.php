@@ -33,6 +33,7 @@ class Url extends Model
 
     protected $fillable = [
         'original_url',
+        'normalized_url',
         'short_code',
     ];
 }

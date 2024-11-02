@@ -35,18 +35,20 @@ class CreateUrlsTable extends Migration
      *
      * @return void
      */
-    public function up(): void
+    public function up()
     {
         Schema::create(
-            'urls', 
+            'urls',
             function (Blueprint $table) {
                 $table->id();
-                $table->string('original_url');
-                $table->string('short_code')->unique();
+                $table->text('original_url');
+                $table->string('normalized_url')->unique();
+                $table->string('short_code', 6)->unique();
                 $table->timestamps();
             }
-        );
+        );        
     }
+
 
     /**
      * Reverse the migrations by dropping the 'urls' table.
