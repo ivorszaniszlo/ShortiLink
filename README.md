@@ -17,6 +17,7 @@
 - [API Endpoints](#api-endpoints)
 - [Artisan Commands](#artisan-commands)
 - [Testing](#testing)
+- [Code Quality Analysis](#code-quality-analysis)
 - [Status](#status)
 - [Created By](#created-by)
 
@@ -235,6 +236,20 @@ php artisan migrate:refresh --seed
 ```
 
 Note: We also use PHPStan to ensure code quality, particularly for type consistency across the application.
+
+## Code Quality Analysis
+
+To ensure the code maintains a high standard, Larastan and PHPInsights are used for static analysis and code quality checks.
+
+Run Larastan analysis with the following command:
+
+```bash
+docker-compose exec app vendor/bin/phpstan analyse
+```
+
+The output of the Larastan analysis for the ShortiLink project can be seen below:
+
+![ShortiLink Code Analysis Result](./public/shortilink-code-analysis-result.jpg)
 
 ## Status
 
